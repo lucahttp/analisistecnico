@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+      #chart {
+        max-width: 650px;
+        margin: 35px auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <svg
+      id="loaderPoints"
+      style="display: none"
+      class="spinner"
+      width="65px"
+      height="65px"
+      viewBox="0 0 66 66"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle
+        class="path"
+        fill="none"
+        stroke-width="6"
+        stroke-linecap="round"
+        cx="33"
+        cy="33"
+        r="30"
+      ></circle>
+    </svg>
+    <div id="chart"></div>
+    <script>
+      function createChart(response) {
+        var options = {
+          chart: {
+            height: 380,
+            width: "100%",
+            type: "line",
+          },
+          series: [],
+          xaxis: {
+            type: "datetime",
+            //min: new Date("01 Mar 2012").getTime(),
+            tickAmount: 6,
+            categories: [],
+
+            labels: {
+              //format: "dd/MM",
+              formatter: function (timestamp) {
+                var options = {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                };
+                var today = new Date(timestamp);
+                //return new Date(timestamp); // The formatter function overrides format property
+                return today.toLocaleDateString("es-AR");
+              },
+              datetimeFormatter: {
+                year: "YY",
+                month: "MMM 'yy",
+                day: "dd",
+                hour: "HH:mm",
+              },
+            },
+            /*
+              labels: {
+                format: "dd/MM",
+              },*/
+          },
+        };
+        console.log(response);
+        options["series"] = response.data;
+        options["xaxis"]["categories"] = response.date;
+        options["title"] = { text: response.name };
+
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+
+        chart.render();
+      }
+
+      function showSpinner(idOfLoader) {
+        document.getElementById(idOfLoader).style.display = "block";
+      }
+
+      function hideSpinner(idOfLoader) {
+        document.getElementById(idOfLoader).style.display = "none";
+      }
+
+      async function getJSON(path, callback) {
+        return callback(await fetch(path).then((r) => r.json()));
+      }
+
+      async function addJsonData(idOfLoader, path, callback) {
+        var ggdata;
+        try {
+          showSpinner(idOfLoader);
+          ggdata = await fetch(path).then((r) => r.json());
+          console.log(ggdata);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          hideSpinner(idOfLoader);
+          return callback(ggdata);
+        }
+      }
+
+      var link = "http://localhost/analisistecnico/testing.json";
+      var link =
+        "http://127.0.0.1:5000/api/technical-analysis-between?ticker=AMD&indicator=bbands";
+      addJsonData("loaderPoints", link, (data) => createChart(data));
+    </script>
+  </body>
+</html>
